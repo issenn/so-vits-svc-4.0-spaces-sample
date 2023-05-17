@@ -190,7 +190,7 @@ class OneDriveApp:
                 if ckpt_item.name.endswith(".pth") and ckpt_item.name.startswith("G_"):
                     ckpts.append(ckpt_item.name)
             p = re.compile(r'\d+')
-            ckpts.sort(key=lambda s: int(p.search(s).group()))
+            ckpts.sort(key=lambda s: int(p.search(s).group()), reverse=True)
             models[model_name] = ckpts
             store["models"][username][model_name] = ckpts
         print(json.dumps(models, indent=4))
@@ -345,9 +345,9 @@ with gr.Blocks(css="./style.css") as demo:
         'redirect_uri': redirect_uri,
     })
     with gr.Row():
-        accounts = gr.Dropdown(label="accounts", choices=store['accounts'], allow_custom_value=True)
+        accounts = gr.Dropdown(label="accounts", choices=store['accounts'])
         modules.ui.create_refresh_button(accounts, od_app.get_accounts, lambda: {"choices": store['accounts']}, 'refresh_accounts_states')
-        models = gr.Dropdown(label="models", allow_custom_value=True)
+        models = gr.Dropdown(label="models")
         modules.ui.create_refresh_button(models, od_app.query_models, lambda a: {"choices": list(store["models"].get(a, {}).keys())} if a else {}, 'refresh_models_states', inputs=accounts)
         checkpoints = gr.Dropdown(label="checkpoints", allow_custom_value=True)
         modules.ui.create_refresh_button(checkpoints, od_app.query_models, lambda a, m: {"choices": store["models"].get(a, {}).get(m, [])} if a and m else {}, 'refresh_checkpoints_states', inputs=[accounts, models])
@@ -360,16 +360,22 @@ with gr.Blocks(css="./style.css") as demo:
             with gr.Row():
                 with gr.Column():
                     with gr.Tabs():
-                        with gr.Tab("Clone From Mic"):
-                            audio_mic = gr.Audio(type="filepath", source="microphone", label="Source Audio"),
                         with gr.Tab("Clone From File"):
                             audio_file = gr.Audio(type="filepath", source="upload", label="Source Audio")
-                    speaker = gr.Dropdown(label="speaker", choices=[0], allow_custom_value=True)
+                        with gr.Tab("Clone From Mic"):
+                            audio_mic = gr.Audio(type="filepath", source="microphone", label="Source Audio", interactive=False),
+                    with gr.Row():
+                        with gr.Column():
+                            speaker = gr.Dropdown(label="speaker", choices=[0], allow_custom_value=True)
+                        with gr.Column():
+                            f0_method = gr.Dropdown(label="f0_method", choices=["crepe", "crepe-tiny", "parselmouth", "dio", "harvest"], value="crepe")
+                        with gr.Column():
+                            auto_predict_f0 = gr.Checkbox(False, label="auto_predict_f0")
                     transpose = gr.Slider(-12, 12, value=0, step=1, label="transpose")
-                    auto_predict_f0 = gr.Checkbox(False, label="auto_predict_f0")
-                    cluster_infer_ratio = gr.Slider(0.0, 1.0, value=default_cluster_infer_ratio, step=0.1, label="cluster_infer_ratio")
-                    noise_scale = gr.Slider(0.0, 1.0, value=0.4, step=0.1, label="noise_scale")
-                    f0_method = gr.Dropdown(label="f0_method", choices=["crepe", "crepe-tiny", "parselmouth", "dio", "harvest"], value="crepe")
+                    with gr.Row():
+                        cluster_infer_ratio = gr.Slider(0.0, 1.0, value=default_cluster_infer_ratio, step=0.1, label="cluster_infer_ratio")
+                    with gr.Row():
+                        noise_scale = gr.Slider(0.0, 1.0, value=0.4, step=0.1, label="noise_scale")
                     inference_btn = gr.Button("inference")
                 with gr.Column():
                     output_audio = gr.Audio(label="output_audio")
@@ -403,6 +409,7 @@ with gr.Blocks(css="./style.css") as demo:
                     # auth_uri = gr.HTML(label="auth_uri")
                     auth_uri = gr.Textbox(label="auth_uri")
                     auth_uri.style(show_copy_button=True, container=True)
+            with gr.Box():
                 auth_code = gr.Textbox(label="auth_code", placeholder="M.R3_BAY.c0...")
                 auth_state = gr.Textbox(label="auth_state", placeholder="pAfuWckRoda...")
                 auth_client_info = gr.Textbox(label="auth_client_info", placeholder="eyJ1aWQiOiJ...")
@@ -424,15 +431,15 @@ with gr.Blocks(css="./style.css") as demo:
             outputs=[checkpoints],
         )
         checkpoints.select(
-            fn=modules.ui.create_refresh_func(checkpoints, model.use_model, {}),
+            fn=modules.ui.create_refresh_func(checkpoints, model.use_model, {"choices": ["Kawashima_Kyoko"], "value": "Kawashima_Kyoko"}),
             inputs=[accounts, models, checkpoints],
-            # outputs=[checkpoints],
+            outputs=[speaker],
         )
-        inference_btn.click(
-            fn=predict,
-            inputs=[speaker, audio_file],
-            outputs=[output_audio],
-        )
+        # inference_btn.click(
+        #     fn=predict,
+        #     inputs=[speaker, audio_file],
+        #     outputs=[output_audio],
+        # )
         # def acquire_token_by_flow_for_api(code, state=None, client_info=None, session_state=None):
         #     result, _ = od_app.acquire_token_by_flow(code, state, client_info, session_state)
         #     if result:
