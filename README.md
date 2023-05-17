@@ -1,5 +1,5 @@
 ---
-title: Test Gradio
+title: Voice sample
 emoji: ⚡
 colorFrom: blue
 colorTo: yellow
