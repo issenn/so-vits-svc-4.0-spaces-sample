@@ -435,11 +435,11 @@ with gr.Blocks(css="./style.css") as demo:
             inputs=[accounts, models, checkpoints],
             outputs=[speaker],
         )
-        # inference_btn.click(
-        #     fn=predict,
-        #     inputs=[speaker, audio_file],
-        #     outputs=[output_audio],
-        # )
+        inference_btn.click(
+            fn=predict,
+            inputs=[speaker, audio_file],
+            outputs=[output_audio],
+        )
         # def acquire_token_by_flow_for_api(code, state=None, client_info=None, session_state=None):
         #     result, _ = od_app.acquire_token_by_flow(code, state, client_info, session_state)
         #     if result:
