@@ -1,0 +1,6 @@
+numpy==1.23.5
+gradio==3.30.0
+librosa==0.9.1
+huggingface_hub==0.14.1
+Office365-REST-Python-Client==2.4.1
+so-vits-svc-fork==3.14.1
